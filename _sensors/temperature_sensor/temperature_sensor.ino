@@ -1,25 +1,21 @@
 #include <WiFi101.h>
 #include <WiFiClient.h>
 #include <OneWire.h>
-
-#include <thethingsiO_mkr1000.h>
-
+#include<stdlib.h>
 
 OneWire  ds(2);
 
-#define WIFI_AP "NextFab"
-#define WIFI_PWD "makeithere"
-#define SERVER "172.16.37.59"
+#define WIFI_AP "WIFI_NETWORK_NAME"
+#define WIFI_PWD "WIFI_PASSWORD"
+#define SERVER "www.example.com"
 #define URI "/api/v1/temp"
 #define PORT 5000
 
 int status = -1;
-int millis_start;
 
 WiFiClient client;
 
 void setup(void) {
-  millis_start = millis();
   Serial.begin(115200);
   startWifi();
 }
@@ -120,7 +116,12 @@ void loop(void) {
   Serial.print(" Celsius, ");
   Serial.print(fahrenheit);
   Serial.println(" Fahrenheit");
+  Serial.print("Connected to Wifi=");
   if (client.connect(SERVER, PORT)) {
+    String myDataString = "";
+    myDataString += "{\"temp\":";
+    myDataString += fahrenheit;
+    myDataString += "}";
     Serial.println("connected to server");
     // Make a HTTP request:
     client.print("POST ");
@@ -129,42 +130,19 @@ void loop(void) {
     client.print("Host: ");
     client.println(SERVER);
     client.println("Content-Type: application/json");
-    client.println("Content-Length: 14");
-    client.println("");
-    client.print("{\"temp\":");
-    client.print(fahrenheit);
-    client.println("}");
-    client.println("Connection: close");
+    client.print("Content-Length: ");
+    client.println(myDataString.length());
     client.println();
-
-    Serial.print("POST ");
-    Serial.print(URI);
-    Serial.println(" HTTP/1.1");
-    Serial.print("Host: ");
-    Serial.println(SERVER);
-    Serial.println("Content-Type: application/json");
-    Serial.println("Content-Length: 14");
-    Serial.println("");
-    Serial.print("{\"temp\":");
-    Serial.print(fahrenheit);
-    Serial.println("}");
-    //Serial.println("Connection: close");
-    Serial.println();
-
-    
+    client.print(myDataString);
     client.stop();
     Serial.println("data sent");
   }
-
-    
-    millis_start = millis();
-  }
 }
+
 
 void startWifi(){
   Serial.println("Connecting MKR1000 to network...");
-//  WiFi.begin();
-   // attempt to connect to Wifi network:
+  // attempt to connect to Wifi network:
   while ( status != WL_CONNECTED ) {
     Serial.print("Attempting to connect to WPA SSID: ");
     Serial.println(WIFI_AP);
